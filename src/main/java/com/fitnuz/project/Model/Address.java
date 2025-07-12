@@ -44,8 +44,7 @@ public class Address {
         this.street = street;
         this.buildingName = buildingName;
     }
-    public Address() {
-    }
+
 
     public Long getAddressId() {
         return addressId;
