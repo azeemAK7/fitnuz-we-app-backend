@@ -52,11 +52,12 @@ public class JwtUtils {
 
     public ResponseCookie generateCookieFromUserName(UserDetails userDetails){
         String jwt = generateTokenFromUserName(userDetails.getUsername());
-        ResponseCookie cookie  = ResponseCookie.from(jwtCookie,jwt)
-                .path("/api")
+        ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt)
+                .path("/") // or "/api", but "/" is safer if all endpoints need it
                 .httpOnly(true)
-                .maxAge(24*60*60)
-                .secure(true)
+                .secure(true) // Required for cross-site + HTTPS
+                .sameSite("None") // ✅ Crucial for cross-origin cookie sharing
+                .maxAge(24 * 60 * 60)
                 .build();
         return cookie;
     }

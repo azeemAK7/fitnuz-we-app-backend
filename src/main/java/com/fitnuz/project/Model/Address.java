@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Table(name = "addresses")
@@ -35,6 +34,9 @@ public class Address {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public Address() {
+    }
 
     public Address(String pincode, String country, String state, String city, String street, String buildingName) {
         this.pincode = pincode;
