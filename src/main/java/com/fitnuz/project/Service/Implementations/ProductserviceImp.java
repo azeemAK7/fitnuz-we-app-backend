@@ -255,12 +255,12 @@ public class ProductserviceImp implements ProductService {
     }
 
 
-    public String constructImageUrl(String fileName){
-        String fullUrl = imageUrl + path;
-        if(fileName.equals("default.png")){
-            return fullUrl + "a06f0845-8a92-4af9-8ee5-f655012d7fff.png";
-        }
-        return path.endsWith("/") ? fullUrl + fileName : fullUrl + "/" + fileName;
+
+
+    public String constructImageUrl(String fileName) {
+        String baseUrl = imageUrl.endsWith("/") ? imageUrl : imageUrl + "/";
+        String finalPath = path.startsWith("/") ? path.substring(1) : path; // remove leading /
+        return baseUrl + finalPath + fileName;
     }
 
 
