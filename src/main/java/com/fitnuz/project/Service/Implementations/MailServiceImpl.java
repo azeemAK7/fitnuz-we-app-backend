@@ -10,10 +10,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
-public class MailServiceImpl implements MailService  {
+public class MailServiceImpl implements MailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+
+    public MailServiceImpl(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     @Override
     public void sendOrderReport(String toEmail, String subject, String body, byte[] pdfContent, String fileName) throws MessagingException {
@@ -23,7 +26,6 @@ public class MailServiceImpl implements MailService  {
         helper.setTo(toEmail);
         helper.setSubject(subject);
         helper.setText(body);
-
         helper.addAttachment(fileName, new ByteArrayResource(pdfContent));
 
         mailSender.send(message);
