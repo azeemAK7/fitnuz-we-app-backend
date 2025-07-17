@@ -118,7 +118,7 @@ public class ProductserviceImp implements ProductService {
         List<ProductDto> productDtos = products.stream()
                 .map(product -> {
                     ProductDto productDto = modelMapper.map(product,ProductDto.class);
-                    productDto.setImage(constructImageUrl(product.getImage()));
+                    productDto.setImage(product.getImage());
                     return productDto;
                 })
                 .toList();
