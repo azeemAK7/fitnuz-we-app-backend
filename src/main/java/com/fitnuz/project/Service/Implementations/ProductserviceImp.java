@@ -54,7 +54,7 @@ public class ProductserviceImp implements ProductService {
     CartService cartService;
 
     @Autowired
-    @Qualifier("localFileService")
+    @Qualifier("cloudinaryFileService")
     FileService fileService;
 
     @Autowired
