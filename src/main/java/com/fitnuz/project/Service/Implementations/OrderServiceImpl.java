@@ -9,11 +9,14 @@ import com.fitnuz.project.Payload.Response.AddressResponse;
 import com.fitnuz.project.Payload.Response.OrderResponse;
 import com.fitnuz.project.Repository.*;
 import com.fitnuz.project.Service.Definations.CartService;
+import com.fitnuz.project.Service.Definations.MailService;
 import com.fitnuz.project.Service.Definations.OrderService;
 import com.fitnuz.project.Util.AuthUtil;
+import com.fitnuz.project.Util.PdfGenerator;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -51,6 +54,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     ProductRepository productRepository;
+
+    @Autowired
+    private PdfGenerator pdfGenerator;
+
+    @Autowired
+    private MailService mailService;
+
+    @Value("${spring.mail.username}")
+    private String mail;
 
 
     @Transactional
@@ -116,6 +128,20 @@ public class OrderServiceImpl implements OrderService {
 
         AddressResponse addressResponse = modelMapper.map(savedOrder.getAddress(), AddressResponse.class);
         orderResponse.setAddress(addressResponse.getFullAddress());
+
+        try {
+            byte[] pdfReport = pdfGenerator.generateOrderReport(orderResponse);
+            String adminEmail = mail; // Replace with actual admin email
+            mailService.sendOrderReport(
+                    adminEmail,
+                    "New Order Received - #" + savedOrder.getOrderId(),
+                    "Please find the attached order report.",
+                    pdfReport,
+                    "Order_" + savedOrder.getOrderId() + ".pdf"
+            );
+        } catch (Exception e) {
+            e.printStackTrace(); // Optionally log the failure but don't fail the order placement
+        }
 
         return orderResponse;
     }
