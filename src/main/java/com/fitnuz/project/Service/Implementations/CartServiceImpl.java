@@ -135,7 +135,7 @@ public class CartServiceImpl implements CartService {
                 .map(cartItem -> {
                     Product product = cartItem.getProduct();
                     product.setProductQuantity(cartItem.getQuantity());
-                    product.setImage(constructImageUrl(product.getImage()));
+                    product.setImage(product.getImage());
                     return modelMapper.map(cartItem.getProduct(),ProductDto.class);
                 })
                 .toList();
