@@ -1,7 +1,5 @@
 package com.fitnuz.project.Payload.DTO;
 
-import com.fitnuz.project.Model.Category;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,7 +19,7 @@ public class ProductDto {
 
     @NotBlank(message = "Product description is required")
     @Size(min = 3,message = "product discription must contain minimum 3 characters")
-    private String productDiscription;
+    private String productDescription;
 
     private String image;
 
@@ -64,12 +62,12 @@ public class ProductDto {
         this.productName = productName;
     }
 
-    public String getProductDiscription() {
-        return productDiscription;
+    public String getProductDescription() {
+        return productDescription;
     }
 
-    public void setProductDiscription(String productDiscription) {
-        this.productDiscription = productDiscription;
+    public void setProductDescription(String productDescription) {
+        this.productDescription = productDescription;
     }
 
     public String getImage() {

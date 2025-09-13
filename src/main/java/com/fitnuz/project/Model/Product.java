@@ -9,7 +9,6 @@ import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Data
@@ -22,7 +21,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
     private String productName;
-    private String productDiscription;
+    private String productDescription;
     private String image;
     private Integer productQuantity ;
     private Double productPrice;
@@ -97,12 +96,12 @@ public class Product {
         this.image = image;
     }
 
-    public String getProductDiscription() {
-        return productDiscription;
+    public String getProductDescription() {
+        return productDescription;
     }
 
-    public void setProductDiscription(String productDiscription) {
-        this.productDiscription = productDiscription;
+    public void setProductDescription(String productDescription) {
+        this.productDescription = productDescription;
     }
 
     public String getProductName() {

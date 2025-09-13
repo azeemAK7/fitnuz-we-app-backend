@@ -28,12 +28,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class ProductserviceImp implements ProductService {
@@ -197,7 +195,7 @@ public class ProductserviceImp implements ProductService {
             throw new DuplicateResourceFoundException("Product with product name : " + productDto.getProductName()+" already exists");
         }
         product.setProductName(productDto.getProductName());
-        product.setProductDiscription(productDto.getProductDiscription());
+        product.setProductDescription(productDto.getProductDescription());
         product.setDiscount(productDto.getDiscount());
         product.setProductPrice(productDto.getProductPrice());
         product.setProductQuantity(productDto.getProductQuantity());
