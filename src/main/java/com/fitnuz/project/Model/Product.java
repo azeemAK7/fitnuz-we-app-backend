@@ -23,7 +23,7 @@ public class Product {
     private String productName;
     private String productDescription;
     private String image;
-    private Integer productQuantity ;
+    private Integer productStock;
     private Double productPrice;
     private Double specialPrice;
     private Double discount;
@@ -80,12 +80,12 @@ public class Product {
         this.productPrice = productPrice;
     }
 
-    public Integer getProductQuantity() {
-        return productQuantity;
+    public Integer getProductStock() {
+        return productStock;
     }
 
-    public void setProductQuantity(Integer productQuantity) {
-        this.productQuantity = productQuantity;
+    public void setProductStock(Integer productStock) {
+        this.productStock = productStock;
     }
 
     public String getImage() {

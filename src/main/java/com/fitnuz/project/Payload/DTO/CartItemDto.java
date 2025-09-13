@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CartItemDto {
     private Long productId;
-    private Integer productQuantity;
+    private Integer productStock;
 
     public Long getProductId() {
         return productId;
@@ -19,11 +19,11 @@ public class CartItemDto {
         this.productId = productId;
     }
 
-    public Integer getProductQuantity() {
-        return productQuantity;
+    public Integer getProductStock() {
+        return productStock;
     }
 
-    public void setProductQuantity(Integer productQuantity) {
-        this.productQuantity = productQuantity;
+    public void setProductStock(Integer productStock) {
+        this.productStock = productStock;
     }
 }

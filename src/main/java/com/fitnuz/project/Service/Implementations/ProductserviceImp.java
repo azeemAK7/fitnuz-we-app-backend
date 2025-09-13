@@ -198,7 +198,7 @@ public class ProductserviceImp implements ProductService {
         product.setProductDescription(productDto.getProductDescription());
         product.setDiscount(productDto.getDiscount());
         product.setProductPrice(productDto.getProductPrice());
-        product.setProductQuantity(productDto.getProductQuantity());
+        product.setProductStock(productDto.getProductStock());
         Double specialPrice = (productDto.getProductPrice()) -  ((productDto.getDiscount() * 0.01 ) * productDto.getProductPrice());
         product.setSpecialPrice(specialPrice);
         Product savedProduct =  productRepository.save(product);
