@@ -159,12 +159,12 @@ public class SecurityConfig {
             }
 
             if (!userRepository.existsByUserName("seller1")) {
-                User seller1 = new User("seller1", passwordEncoder.encode("password2"), "seller1@example.com");
+                User seller1 = new User("seller1", passwordEncoder.encode("Seller@123"), "seller1@example.com");
                 userRepository.save(seller1);
             }
 
             if (!userRepository.existsByUserName("admin")) {
-                User admin = new User("admin", passwordEncoder.encode("adminPass"), "admin@example.com");
+                User admin = new User("admin", passwordEncoder.encode("Admin@123"), "admin@example.com");
                 userRepository.save(admin);
             }
 
