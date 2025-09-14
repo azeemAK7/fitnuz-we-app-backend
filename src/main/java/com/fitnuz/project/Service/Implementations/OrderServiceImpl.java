@@ -6,6 +6,7 @@ import com.fitnuz.project.Model.*;
 import com.fitnuz.project.Payload.DTO.OrderItemDto;
 import com.fitnuz.project.Payload.DTO.OrderRequestDto;
 import com.fitnuz.project.Payload.Response.AddressResponse;
+import com.fitnuz.project.Payload.Response.OrderDto;
 import com.fitnuz.project.Payload.Response.OrderResponse;
 import com.fitnuz.project.Repository.*;
 import com.fitnuz.project.Service.Definations.CartService;
@@ -17,6 +18,10 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -67,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse placeOrder(String paymentMethod, OrderRequestDto orderRequestDto) {
+    public OrderDto  placeOrder(String paymentMethod, OrderRequestDto orderRequestDto) {
         String emailId = authUtil.getUserEmail();
         Cart cart = cartRepository.findCartByEmail(emailId);
         if (cart == null) {
@@ -123,14 +128,14 @@ public class OrderServiceImpl implements OrderService {
         }
         cart.setTotalPrice(0.0);
         cartRepository.save(cart);
-        OrderResponse orderResponse = modelMapper.map(savedOrder, OrderResponse.class);
-        orderItems.forEach(item -> orderResponse.getOrderItems().add(modelMapper.map(item, OrderItemDto.class)));
+        OrderDto orderDto = modelMapper.map(savedOrder, OrderDto.class);
+        orderItems.forEach(item -> orderDto.getOrderItems().add(modelMapper.map(item, OrderItemDto.class)));
 
         AddressResponse addressResponse = modelMapper.map(savedOrder.getAddress(), AddressResponse.class);
-        orderResponse.setAddress(addressResponse.getFullAddress());
+        orderDto.setAddress(addressResponse.getFullAddress());
 
         try {
-            byte[] pdfReport = pdfGenerator.generateOrderReport(orderResponse);
+            byte[] pdfReport = pdfGenerator.generateOrderReport(orderDto);
             String adminEmail = mail; // Replace with actual admin email
             mailService.sendOrderReport(
                     adminEmail,
@@ -143,9 +148,39 @@ public class OrderServiceImpl implements OrderService {
             e.printStackTrace(); // Optionally log the failure but don't fail the order placement
         }
 
+        return orderDto;
+    }
+
+    @Override
+    public OrderResponse getAllOrders(Integer pageNumber, Integer pageSize, String sortBy, String sortOrderDir) {
+        Sort sortByAndOrderType = sortOrderDir.equalsIgnoreCase("asc") ?Sort.by(sortBy).ascending(): Sort.by(sortBy).descending();
+        Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrderType);
+        Page<Order> pageOrders =  orderRepository.findAll(pageDetails);
+        List<Order> orders = pageOrders.getContent();
+
+        List<OrderDto> orderDtos = orders.stream()
+                .map(order -> modelMapper.map(order,OrderDto.class))
+                .toList();
+
+        OrderResponse orderResponse = new OrderResponse();
+        orderResponse.setContent(orderDtos);
+        orderResponse.setPageNumber(pageOrders.getNumber());
+        orderResponse.setPageSize(pageOrders.getSize());
+        orderResponse.setTotalElements(pageOrders.getTotalElements());
+        orderResponse.setTotalPages(pageOrders.getTotalPages());
+        orderResponse.setLastPage(pageOrders.isLast());
+
         return orderResponse;
     }
 
+    @Override
+    public String updateOrderStatus(Long orderId, String orderStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("order", "orderId", orderId));
+        order.setOrderStatus(orderStatus);
+        orderRepository.save(order);
+        return "Order Status Updated";
+    }
 
 
 }

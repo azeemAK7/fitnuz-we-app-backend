@@ -1,89 +1,70 @@
 package com.fitnuz.project.Payload.Response;
 
-import com.fitnuz.project.Payload.DTO.OrderItemDto;
-import com.fitnuz.project.Payload.DTO.PaymentDto;
+
+import com.fitnuz.project.Payload.DTO.ProductDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class OrderResponse {
-    private Long orderId;
-    private String email;
-    private List<OrderItemDto> orderItems = new ArrayList<>();
-    private LocalDate orderDate;
-    private PaymentDto payment;
-    private Double totalAmount;
-    private String orderStatus;
-    private String address;
+    private List<OrderDto> content;
 
-    public Long getOrderId() {
-        return orderId;
+    private Integer pageSize;
+    private Integer pageNumber;
+    private Long totalElements;
+    private Integer totalPages;
+    private boolean isLastPage;
+
+    public List<OrderDto> getContent() {
+        return content;
     }
 
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
+    public void setContent(List<OrderDto> content) {
+        this.content = content;
     }
 
-    public String getAddress() {
-        return address;
+    public Integer getPageSize() {
+        return pageSize;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setPageSize(Integer pageSize) {
+        this.pageSize = pageSize;
     }
 
-    public String getOrderStatus() {
-        return orderStatus;
+    public Integer getPageNumber() {
+        return pageNumber;
     }
 
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
+    public void setPageNumber(Integer pageNumber) {
+        this.pageNumber = pageNumber;
     }
 
-    public Double getTotalAmount() {
-        return totalAmount;
+    public Long getTotalElements() {
+        return totalElements;
     }
 
-    public void setTotalAmount(Double totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setTotalElements(Long totalElements) {
+        this.totalElements = totalElements;
     }
 
-    public PaymentDto getPayment() {
-        return payment;
+    public Integer getTotalPages() {
+        return totalPages;
     }
 
-    public void setPayment(PaymentDto payment) {
-        this.payment = payment;
+    public void setTotalPages(Integer totalPages) {
+        this.totalPages = totalPages;
     }
 
-    public LocalDate getOrderDate() {
-        return orderDate;
+    public boolean isLastPage() {
+        return isLastPage;
     }
 
-    public void setOrderDate(LocalDate orderDate) {
-        this.orderDate = orderDate;
-    }
-
-    public List<OrderItemDto> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItemDto> orderItems) {
-        this.orderItems = orderItems;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setLastPage(boolean lastPage) {
+        isLastPage = lastPage;
     }
 }

@@ -2,6 +2,7 @@ package com.fitnuz.project.Util;
 
 
 import com.fitnuz.project.Payload.DTO.OrderItemDto;
+import com.fitnuz.project.Payload.Response.OrderDto;
 import com.fitnuz.project.Payload.Response.OrderResponse;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -15,7 +16,7 @@ import java.io.ByteArrayOutputStream;
 @Component
 public class PdfGenerator {
 
-    public byte[] generateOrderReport(OrderResponse orderResponse) {
+    public byte[] generateOrderReport(OrderDto orderResponse) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(out);
         PdfDocument pdf = new PdfDocument(writer);
