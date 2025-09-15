@@ -59,6 +59,28 @@ public class CategoryServiceImp implements CategoryService {
     }
 
     @Override
+    public CategoryResponse getAllCategoriesForAdmin(Integer pageNumber, Integer pageSize, String sortBy, String sortOrderDir) {
+        Sort sortByAndOrderType = sortOrderDir.equalsIgnoreCase("asc") ?Sort.by(sortBy).ascending(): Sort.by(sortBy).descending();
+        Pageable pageDetail = PageRequest.of(pageNumber,pageSize,sortByAndOrderType);
+        Page<Category> categoryPage = categoryRepository.findAll(pageDetail);
+        List<Category> categories = categoryPage.getContent();
+//        if(categories.isEmpty()){
+//            throw new GeneralAPIException("Category List Is Empty At The Moment");
+//        }
+        List<CategoryDTO> categoryDTO = categories.stream()
+                .map(category -> modelMapper.map(category,CategoryDTO.class))
+                .toList();
+        CategoryResponse categoryResponse = new CategoryResponse();
+        categoryResponse.setContent(categoryDTO);
+        categoryResponse.setPageSize(categoryPage.getSize());
+        categoryResponse.setPageNumber(categoryPage.getNumber());
+        categoryResponse.setTotalElements(categoryPage.getTotalElements());
+        categoryResponse.setTotalPages(categoryPage.getTotalPages());
+        categoryResponse.setLastPage(categoryPage.isLast());
+        return categoryResponse;
+    }
+
+    @Override
     public CategoryDTO createCategory(CategoryDTO categoryDTO) {
         Category category = modelMapper.map(categoryDTO,Category.class);
         Category savedCategory = categoryRepository.findByCategoryName(category.getCategoryName());

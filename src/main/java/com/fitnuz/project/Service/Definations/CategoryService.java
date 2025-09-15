@@ -15,4 +15,6 @@ public interface CategoryService {
     Category updateCategory(Category category, Long categoryId);
 
     CategoryDTO getCategory(Long categoryId);
+
+    CategoryResponse getAllCategoriesForAdmin(Integer pageNumber, Integer pageSize, String sortBy, String sortOrderDir);
 }

@@ -252,7 +252,34 @@ public class ProductserviceImp implements ProductService {
         return productDto;
     }
 
+    @Override
+    public ProductResponse getAllProductsForAdmin(Integer pageNumber, Integer pageSize, String sortBy, String sortOrderDir) {
+        Sort sort = sortOrderDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sort);
+        Page<Product> productsPage = productRepository.findAll(pageDetails);
+        List<Product> products = productsPage.getContent();
 
+//        if(products.isEmpty()){
+//            throw new GeneralAPIException("Product List Is Empty At The Moment");
+//        }
+
+        List<ProductDto> productDtos = products.stream()
+                .map(product -> {
+                    ProductDto productDto = modelMapper.map(product,ProductDto.class);
+                    productDto.setImage(constructImageUrl(product.getImage()));
+                    return productDto;
+                })
+                .toList();
+
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setContent(productDtos);
+        productResponse.setPageSize(productsPage.getSize());
+        productResponse.setPageNumber(productsPage.getNumber());
+        productResponse.setTotalElements(productsPage.getTotalElements());
+        productResponse.setTotalPages(productsPage.getTotalPages());
+        productResponse.setLastPage(productsPage.isLast());
+        return productResponse;
+    }
 
 
     public String constructImageUrl(String fileName) {

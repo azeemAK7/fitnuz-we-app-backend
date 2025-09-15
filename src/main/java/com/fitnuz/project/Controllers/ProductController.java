@@ -78,7 +78,13 @@ public class ProductController {
         return new ResponseEntity<>(updatedProductDto,HttpStatus.OK);
     }
 
-
-
+    @GetMapping("/admin/products")
+    public ResponseEntity<ProductResponse> getAllProductsForAdmin(@RequestParam (name = "pageNumber",defaultValue = AppConstant.PAGE_NUMBER,required = false) Integer pageNumber,
+                                                                  @RequestParam (name = "pageSize",defaultValue = AppConstant.PAGE_SIZE,required = false) Integer pageSize,
+                                                                  @RequestParam (name = "sortBy",defaultValue = AppConstant.SORT_PRODUCT_BY,required = false) String sortBy,
+                                                                  @RequestParam (name = "sortOrderDir",defaultValue = AppConstant.SORT_ORDER_DIR,required = false) String sortOrderDir){
+        ProductResponse productResponse = productService.getAllProductsForAdmin(pageNumber,pageSize,sortBy,sortOrderDir);
+        return new ResponseEntity<>(productResponse,HttpStatus.OK);
+    }
 
 }

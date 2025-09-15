@@ -28,6 +28,15 @@ public class CategoryController {
             return new ResponseEntity<>(categories,HttpStatus.OK);
     }
 
+    @GetMapping("admin/categories")
+    public ResponseEntity<CategoryResponse>  getCategoriesForAdmin(@RequestParam (name = "pageNumber",defaultValue = AppConstant.PAGE_NUMBER,required = false) Integer pageNumber,
+                                                                   @RequestParam (name = "pageSize",defaultValue = AppConstant.PAGE_SIZE,required = false) Integer pageSize,
+                                                                   @RequestParam (name = "sortBy",defaultValue = AppConstant.SORT_CATEGORY_BY,required = false) String sortBy,
+                                                                   @RequestParam (name = "sortOrderDir",defaultValue = AppConstant.SORT_ORDER_DIR,required = false) String sortOrderDir){
+        CategoryResponse categories = categoryService.getAllCategoriesForAdmin(pageNumber,pageSize,sortBy,sortOrderDir);
+        return new ResponseEntity<>(categories,HttpStatus.OK);
+    }
+
     @GetMapping("public/categories/{categoryId}")
     public ResponseEntity<CategoryDTO>  getCategory(@PathVariable Long categoryId){
         CategoryDTO category = categoryService.getCategory(categoryId);
