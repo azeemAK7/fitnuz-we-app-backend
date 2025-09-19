@@ -11,6 +11,6 @@ public class AppConstant {
     public static final String PAGE_SIZE_ORDERS= "5";
     public static final String SORT_ORDER_DIR_ORDERS = "desc";
 
-    public static final String SORT_USER_ORDER_BY = "orderDate";
+    public static final String SORT_USER_ORDER_BY = "orderId";
     public static final String SORT_USER_ORDER_DIR_ORDERS = "desc";
 }
