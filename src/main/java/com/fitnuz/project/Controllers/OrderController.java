@@ -42,8 +42,9 @@ public class OrderController {
     }
 
     @GetMapping("/user/orders")
-    public ResponseEntity<OrderResponse> getUserOrders(){
-        OrderResponse response = orderService.getUserOrders();
+    public ResponseEntity<OrderResponse> getUserOrders(@RequestParam (name = "sortBy",defaultValue = AppConstant.SORT_USER_ORDER_BY,required = false) String sortBy,
+                                                       @RequestParam (name = "sortOrderDir",defaultValue = AppConstant.SORT_USER_ORDER_DIR_ORDERS,required = false) String sortOrderDir){
+        OrderResponse response = orderService.getUserOrders(sortBy,sortOrderDir);
         return new ResponseEntity<OrderResponse>(response,HttpStatus.OK);
     }
 

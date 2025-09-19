@@ -13,5 +13,6 @@ public interface OrderService {
 
     String updateOrderStatus(Long orderId, String status);
 
-    OrderResponse getUserOrders();
+
+    OrderResponse getUserOrders(String sortBy, String sortOrderDir);
 }

@@ -183,9 +183,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse getUserOrders() {
+    public OrderResponse getUserOrders(String sortBy, String sortOrderDir) {
+        Sort sortByAndOrderType = sortOrderDir.equalsIgnoreCase("asc") ?Sort.by(sortBy).ascending(): Sort.by(sortBy).descending();
         String userEmail = authUtil.getUserEmail();
-        List<Order> orders =  orderRepository.findByEmail(userEmail);
+        List<Order> orders =  orderRepository.findByEmail(userEmail,sortByAndOrderType);
 
         List<OrderDto> orderDtos = orders.stream()
                 .map(order ->{
@@ -207,6 +208,7 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse orderResponse = new OrderResponse();
         orderResponse.setContent(orderDtos);
         return orderResponse;
+
     }
 
 
