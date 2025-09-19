@@ -27,7 +27,7 @@ public class FileServiceCloudinaryImpl implements FileService {
 
     @Override
     public String creteFileName(MultipartFile file, String path) throws IOException {
-        if (file.getSize() > 5 * 1024 * 1024) {
+        if (file.getSize() > 1024 * 1024) {
             throw new IllegalArgumentException("File too large");
         }
 

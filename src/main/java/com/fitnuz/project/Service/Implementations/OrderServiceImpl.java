@@ -182,6 +182,33 @@ public class OrderServiceImpl implements OrderService {
         return "Order Status Updated";
     }
 
+    @Override
+    public OrderResponse getUserOrders() {
+        String userEmail = authUtil.getUserEmail();
+        List<Order> orders =  orderRepository.findByEmail(userEmail);
+
+        List<OrderDto> orderDtos = orders.stream()
+                .map(order ->{
+                    OrderDto dto = modelMapper.map(order, OrderDto.class);
+
+                    Address address = order.getAddress();
+                    if (address != null) {
+                        dto.setAddress(address.getBuildingName() + ", " +
+                                address.getStreet() + ", " +
+                                address.getCity() + ", " +
+                                address.getState() + ", " +
+                                address.getCountry() + " - " +
+                                address.getPincode());
+                    }
+                    return dto;
+                })
+                .toList();
+
+        OrderResponse orderResponse = new OrderResponse();
+        orderResponse.setContent(orderDtos);
+        return orderResponse;
+    }
+
 
 }
 

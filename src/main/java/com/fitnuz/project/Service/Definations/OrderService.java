@@ -12,4 +12,6 @@ public interface OrderService {
     OrderResponse getAllOrders(Integer pageNumber, Integer pageSize, String sortBy, String sortOrderDir);
 
     String updateOrderStatus(Long orderId, String status);
+
+    OrderResponse getUserOrders();
 }

@@ -41,6 +41,12 @@ public class OrderController {
         return new ResponseEntity<>(paymentIntent.getClientSecret(), HttpStatus.CREATED);
     }
 
+    @GetMapping("/user/orders")
+    public ResponseEntity<OrderResponse> getUserOrders(){
+        OrderResponse response = orderService.getUserOrders();
+        return new ResponseEntity<OrderResponse>(response,HttpStatus.OK);
+    }
+
     @GetMapping("/admin/orders")
     public ResponseEntity<OrderResponse> getAllOrders(@RequestParam (name = "pageNumber",defaultValue = AppConstant.PAGE_NUMBER,required = false) Integer pageNumber,
                                                       @RequestParam (name = "pageSize",defaultValue = AppConstant.PAGE_SIZE_ORDERS,required = false) Integer pageSize,
