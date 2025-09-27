@@ -27,6 +27,8 @@ public class ProductDto {
     @Min(value = 0, message = "Quantity cannot be negative")
     private Integer productStock;
 
+    private Integer cartQuantity;
+
     @NotNull(message = "Product price is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Product price must be greater than zero")
     private Double productPrice;
@@ -108,5 +110,13 @@ public class ProductDto {
 
     public void setDiscount(Double discount) {
         this.discount = discount;
+    }
+
+    public Integer getCartQuantity() {
+        return cartQuantity;
+    }
+
+    public void setCartQuantity(Integer cartQuantity) {
+        this.cartQuantity = cartQuantity;
     }
 }
