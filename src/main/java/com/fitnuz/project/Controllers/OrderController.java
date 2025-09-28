@@ -12,8 +12,7 @@ import com.fitnuz.project.Service.Definations.StripeService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,5 +60,19 @@ public class OrderController {
     public ResponseEntity<String> updateOrderStatus(@PathVariable Long orderId,@RequestBody OrderStatusDto orderStatus){
         String response = orderService.updateOrderStatus(orderId,orderStatus.getStatus());
         return new ResponseEntity<>(response,HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/orders/{orderId}/invoice")
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long orderId) {
+
+        byte[] pdfBytes = orderService.generateInvoice(orderId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("Order_" + orderId + ".pdf")
+                .build());
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }

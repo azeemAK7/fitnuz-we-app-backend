@@ -15,4 +15,6 @@ public interface OrderService {
 
 
     OrderResponse getUserOrders(String sortBy, String sortOrderDir);
+
+    byte[] generateInvoice(Long orderId);
 }

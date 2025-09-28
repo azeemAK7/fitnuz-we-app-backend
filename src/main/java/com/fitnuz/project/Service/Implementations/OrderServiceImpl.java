@@ -211,6 +211,20 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    @Override
+    public byte[] generateInvoice(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
+        OrderDto orderDto = modelMapper.map(order, OrderDto.class);
+        List<OrderItemDto> items = order.getOrderItems().stream()
+                .map(item -> modelMapper.map(item, OrderItemDto.class))
+                .toList();
+        orderDto.setOrderItems(items);
+        AddressResponse addressResponse = modelMapper.map(order.getAddress(), AddressResponse.class);
+        orderDto.setAddress(addressResponse.getFullAddress());
+        return pdfGenerator.generateOrderReport(orderDto);
+    }
+
 
 }
 
