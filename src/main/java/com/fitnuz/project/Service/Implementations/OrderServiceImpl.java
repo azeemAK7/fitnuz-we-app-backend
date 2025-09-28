@@ -134,19 +134,19 @@ public class OrderServiceImpl implements OrderService {
         AddressResponse addressResponse = modelMapper.map(savedOrder.getAddress(), AddressResponse.class);
         orderDto.setAddress(addressResponse.getFullAddress());
 
-        try {
-            byte[] pdfReport = pdfGenerator.generateOrderReport(orderDto);
-            String adminEmail = mail; // Replace with actual admin email
-            mailService.sendOrderReport(
-                    adminEmail,
-                    "New Order Received - #" + savedOrder.getOrderId(),
-                    "Please find the attached order report.",
-                    pdfReport,
-                    "Order_" + savedOrder.getOrderId() + ".pdf"
-            );
-        } catch (Exception e) {
-            e.printStackTrace(); // Optionally log the failure but don't fail the order placement
-        }
+//        try {
+//            byte[] pdfReport = pdfGenerator.generateOrderReport(orderDto);
+//            String adminEmail = mail; // Replace with actual admin email
+//            mailService.sendOrderReport(
+//                    adminEmail,
+//                    "New Order Received - #" + savedOrder.getOrderId(),
+//                    "Please find the attached order report.",
+//                    pdfReport,
+//                    "Order_" + savedOrder.getOrderId() + ".pdf"
+//            );
+//        } catch (Exception e) {
+//            e.printStackTrace(); // Optionally log the failure but don't fail the order placement
+//        }
 
         return orderDto;
     }
