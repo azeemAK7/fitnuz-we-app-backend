@@ -75,8 +75,8 @@ public class ChatServiceImpl implements ChatService {
                 if (p.getProductStock() != null && p.getProductStock() <= 0) {
                     sb.append(" | OUT OF STOCK");
                 }
-                if (p.getProductDiscription() != null && !p.getProductDiscription().isEmpty()) {
-                    sb.append(" | ").append(p.getProductDiscription());
+                if (p.getProductDescription() != null && !p.getProductDescription().isEmpty()) {
+                    sb.append(" | ").append(p.getProductDescription());
                 }
                 sb.append("\n");
             }
