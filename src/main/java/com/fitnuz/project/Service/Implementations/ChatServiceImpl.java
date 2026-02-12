@@ -72,7 +72,7 @@ public class ChatServiceImpl implements ChatService {
                     sb.append(" | Discount: ").append(String.format("%.0f", p.getDiscount())).append("%");
                     sb.append(" | Sale Price: $").append(String.format("%.2f", p.getSpecialPrice()));
                 }
-                if (p.getProductQuantity() != null && p.getProductQuantity() <= 0) {
+                if (p.getProductStock() != null && p.getProductStock() <= 0) {
                     sb.append(" | OUT OF STOCK");
                 }
                 if (p.getProductDiscription() != null && !p.getProductDiscription().isEmpty()) {
