@@ -22,10 +22,10 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key:}")
     private String geminiApiKey;
 
-    @Value("${gemini.api.url}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}")
     private String geminiApiUrl;
 
     @Override
