@@ -184,10 +184,12 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         try {
+            String statusTitle = getStatusTitle(orderStatus);
+            String statusMessage = getStatusMessage(orderId, orderStatus);
             pushNotificationService.sendNotificationToUser(
                     order.getEmail(),
-                    "Order Status Updated",
-                    "Order #" + orderId + " is now " + orderStatus,
+                    statusTitle,
+                    statusMessage,
                     orderId
             );
         } catch (Exception e) {
@@ -196,6 +198,28 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return "Order Status Updated";
+    }
+
+    private String getStatusTitle(String status) {
+        return switch (status.toLowerCase()) {
+            case "shipped" -> "It's Coming... Eventually";
+            case "delivered" -> "Look What Finally Arrived";
+            case "cancelled" -> "Well, That's Done";
+            case "processing" -> "We're On It (Probably)";
+            case "confirmed" -> "Oh, You Were Serious?";
+            default -> "Order Update";
+        };
+    }
+
+    private String getStatusMessage(Long orderId, String status) {
+        return switch (status.toLowerCase()) {
+            case "shipped" -> "Order #" + orderId + " has left the building. Try not to refresh the tracking page every 5 seconds.";
+            case "delivered" -> "Order #" + orderId + " is at your door. We won't judge how fast you open it.";
+            case "cancelled" -> "Order #" + orderId + " has been cancelled. We'll try not to take it personally.";
+            case "processing" -> "Order #" + orderId + " is being prepared. Our hamsters are running as fast as they can.";
+            case "confirmed" -> "Order #" + orderId + " is confirmed. No takebacks now!";
+            default -> "Order #" + orderId + " status updated to: " + status;
+        };
     }
 
     @Override
