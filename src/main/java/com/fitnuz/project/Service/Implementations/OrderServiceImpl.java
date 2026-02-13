@@ -202,22 +202,24 @@ public class OrderServiceImpl implements OrderService {
 
     private String getStatusTitle(String status) {
         return switch (status.toLowerCase()) {
+            case "pending" -> "Hold Your Horses";
+            case "accepted" -> "Oh, You Were Serious?";
+            case "processing" -> "We're On It (Probably)";
             case "shipped" -> "It's Coming... Eventually";
             case "delivered" -> "Look What Finally Arrived";
             case "cancelled" -> "Well, That's Done";
-            case "processing" -> "We're On It (Probably)";
-            case "confirmed" -> "Oh, You Were Serious?";
             default -> "Order Update";
         };
     }
 
     private String getStatusMessage(Long orderId, String status) {
         return switch (status.toLowerCase()) {
+            case "pending" -> "Order #" + orderId + " is pending. We're thinking about it, okay?";
+            case "accepted" -> "Order #" + orderId + " is accepted. No takebacks now!";
+            case "processing" -> "Order #" + orderId + " is being prepared. Our hamsters are running as fast as they can.";
             case "shipped" -> "Order #" + orderId + " has left the building. Try not to refresh the tracking page every 5 seconds.";
             case "delivered" -> "Order #" + orderId + " is at your door. We won't judge how fast you open it.";
             case "cancelled" -> "Order #" + orderId + " has been cancelled. We'll try not to take it personally.";
-            case "processing" -> "Order #" + orderId + " is being prepared. Our hamsters are running as fast as they can.";
-            case "confirmed" -> "Order #" + orderId + " is confirmed. No takebacks now!";
             default -> "Order #" + orderId + " status updated to: " + status;
         };
     }
