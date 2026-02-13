@@ -42,12 +42,17 @@ public class PushNotificationService {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
+        logger.info("VAPID public key length: {}, starts with: {}", vapidPublicKey.length(), vapidPublicKey.substring(0, Math.min(10, vapidPublicKey.length())));
+        logger.info("VAPID private key length: {}, starts with: {}", vapidPrivateKey.length(), vapidPrivateKey.substring(0, Math.min(10, vapidPrivateKey.length())));
+        try {
+            pushService = new PushService(vapidPublicKey, vapidPrivateKey);
+            logger.info("PushService initialized successfully with VAPID keys");
+        } catch (Exception e) {
+            logger.error("Failed to initialize PushService - VAPID keys are invalid: {}", e.getMessage());
+        }
     }
 
-    private PushService getPushService() throws Exception {
-        if (pushService == null) {
-            pushService = new PushService(vapidPublicKey, vapidPrivateKey);
-        }
+    private PushService getPushService() {
         return pushService;
     }
 
