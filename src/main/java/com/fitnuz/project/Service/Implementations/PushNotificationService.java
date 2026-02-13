@@ -4,6 +4,7 @@ import com.fitnuz.project.Model.PushSubscription;
 import com.fitnuz.project.Model.User;
 import com.fitnuz.project.Repository.PushSubscriptionRepository;
 import com.fitnuz.project.Repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
@@ -36,11 +37,15 @@ public class PushNotificationService {
 
     private PushService pushService;
 
+    @PostConstruct
+    public void init() {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
     private PushService getPushService() throws Exception {
         if (pushService == null) {
-            if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-                Security.addProvider(new BouncyCastleProvider());
-            }
             pushService = new PushService(vapidPublicKey, vapidPrivateKey);
         }
         return pushService;
