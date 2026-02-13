@@ -66,6 +66,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private PushNotificationService pushNotificationService;
+
     @Value("${spring.mail.username}")
     private String mail;
 
@@ -179,6 +182,19 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("order", "orderId", orderId));
         order.setOrderStatus(orderStatus);
         orderRepository.save(order);
+
+        try {
+            pushNotificationService.sendNotificationToUser(
+                    order.getEmail(),
+                    "Order Status Updated",
+                    "Order #" + orderId + " is now " + orderStatus,
+                    orderId
+            );
+        } catch (Exception e) {
+            // Push failure should not break the status update
+            e.printStackTrace();
+        }
+
         return "Order Status Updated";
     }
 
