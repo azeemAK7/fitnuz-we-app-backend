@@ -1,10 +1,12 @@
 package com.fitnuz.project.Payload.DTO;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,22 +25,44 @@ public class ProductDto {
 
     private String image;
 
-    @NotNull(message = "Product quantity is required")
-    @Min(value = 0, message = "Quantity cannot be negative")
     private Integer productStock;
 
     private Integer cartQuantity;
 
-    @NotNull(message = "Product price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Product price must be greater than zero")
     private Double productPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Special price cannot be negative")
     private Double specialPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Discount cannot be negative")
-    @DecimalMax(value = "100.0", message = "Discount cannot be more than 100%")
     private Double discount;
+
+    private List<ProductVariantDto> variants;
+
+    private Long variantId;
+    private String weightLabel;
+
+    public List<ProductVariantDto> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(List<ProductVariantDto> variants) {
+        this.variants = variants;
+    }
+
+    public Long getVariantId() {
+        return variantId;
+    }
+
+    public void setVariantId(Long variantId) {
+        this.variantId = variantId;
+    }
+
+    public String getWeightLabel() {
+        return weightLabel;
+    }
+
+    public void setWeightLabel(String weightLabel) {
+        this.weightLabel = weightLabel;
+    }
 
     public String getProductCategory() {
         return productCategory;

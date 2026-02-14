@@ -18,9 +18,9 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
-    @PostMapping("/carts/products/{productId}/quantity/{quantity}")
-    public ResponseEntity<CartDto> addProductToCart(@PathVariable Long productId,@PathVariable Integer quantity){
-        CartDto cartDto = cartService.addProduct(productId,quantity);
+    @PostMapping("/carts/variants/{variantId}/quantity/{quantity}")
+    public ResponseEntity<CartDto> addProductToCart(@PathVariable Long variantId,@PathVariable Integer quantity){
+        CartDto cartDto = cartService.addProduct(variantId,quantity);
         return new ResponseEntity<>(cartDto, HttpStatus.CREATED);
     }
 
@@ -42,15 +42,15 @@ public class CartController {
         return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
 
-    @PutMapping("/carts/products/{productId}/quantity/{operation}")
-    public ResponseEntity<CartDto> updateProductStock(@PathVariable Long productId,@PathVariable String operation){
-        CartDto cartDto = cartService.updateProductStock(productId,operation);
+    @PutMapping("/carts/variants/{variantId}/quantity/{operation}")
+    public ResponseEntity<CartDto> updateProductStock(@PathVariable Long variantId,@PathVariable String operation){
+        CartDto cartDto = cartService.updateProductStock(variantId,operation);
         return new ResponseEntity<>(cartDto,HttpStatus.OK);
     }
 
-    @DeleteMapping("/carts/{cartId}/products/{productId}")
-    public ResponseEntity<String> deleteProductFromCart(@PathVariable Long productId,@PathVariable Long cartId){
-        String response = cartService.deleteProductFromCart(productId,cartId);
+    @DeleteMapping("/carts/{cartId}/variants/{variantId}")
+    public ResponseEntity<String> deleteProductFromCart(@PathVariable Long variantId,@PathVariable Long cartId){
+        String response = cartService.deleteProductFromCart(variantId,cartId);
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
 

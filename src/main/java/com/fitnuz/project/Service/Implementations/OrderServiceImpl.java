@@ -4,6 +4,7 @@ import com.fitnuz.project.Exception.CustomException.GeneralAPIException;
 import com.fitnuz.project.Exception.CustomException.ResourceNotFoundException;
 import com.fitnuz.project.Model.*;
 import com.fitnuz.project.Payload.DTO.OrderItemDto;
+import com.fitnuz.project.Repository.ProductVariantRepository;
 import com.fitnuz.project.Payload.DTO.OrderRequestDto;
 import com.fitnuz.project.Payload.Response.AddressResponse;
 import com.fitnuz.project.Payload.Response.OrderDto;
@@ -61,6 +62,9 @@ public class OrderServiceImpl implements OrderService {
     ProductRepository productRepository;
 
     @Autowired
+    ProductVariantRepository productVariantRepository;
+
+    @Autowired
     private PdfGenerator pdfGenerator;
 
     @Autowired
@@ -111,6 +115,12 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setDiscount(cartItem.getProductDiscount());
             orderItem.setOrderedProductPrice(cartItem.getProductPrice());
             orderItem.setOrder(savedOrder);
+
+            // Set weight label from variant
+            if (cartItem.getProductVariant() != null) {
+                orderItem.setWeightLabel(cartItem.getProductVariant().getWeightLabel());
+            }
+
             orderItems.add(orderItem);
         }
 
@@ -121,13 +131,25 @@ public class OrderServiceImpl implements OrderService {
             int quantity = item.getQuantity();
             Product product = item.getProduct();
 
-            // Reduce stock quantity
-            product.setProductStock(product.getProductStock() - quantity);
+            // Reduce variant stock if variant exists, otherwise reduce product stock
+            if (item.getProductVariant() != null) {
+                ProductVariant variant = item.getProductVariant();
+                variant.setStock(variant.getStock() - quantity);
+                productVariantRepository.save(variant);
+                // Also update product-level stock as sum of variant stocks
+                int totalStock = product.getVariants().stream().mapToInt(ProductVariant::getStock).sum();
+                product.setProductStock(totalStock);
+            } else {
+                product.setProductStock(product.getProductStock() - quantity);
+            }
 
-            // Save product back to the database
             productRepository.save(product);
 
-            cartItemRepository.deleteCartItemByProductIdAndCartId(cart.getCartId(), product.getProductId());
+            if (item.getProductVariant() != null) {
+                cartItemRepository.deleteCartItemByVariantIdAndCartId(cart.getCartId(), item.getProductVariant().getVariantId());
+            } else {
+                cartItemRepository.deleteCartItemByProductIdAndCartId(cart.getCartId(), product.getProductId());
+            }
         }
         cart.setTotalPrice(0.0);
         cartRepository.save(cart);

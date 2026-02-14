@@ -7,13 +7,16 @@ import com.fitnuz.project.Model.Cart;
 import com.fitnuz.project.Model.CartItem;
 import com.fitnuz.project.Model.Category;
 import com.fitnuz.project.Model.Product;
+import com.fitnuz.project.Model.ProductVariant;
 import com.fitnuz.project.Payload.DTO.CartDto;
 import com.fitnuz.project.Payload.DTO.ProductDto;
+import com.fitnuz.project.Payload.DTO.ProductVariantDto;
 import com.fitnuz.project.Payload.Response.ProductResponse;
 import com.fitnuz.project.Repository.CartItemRepository;
 import com.fitnuz.project.Repository.CartRepository;
 import com.fitnuz.project.Repository.CategoryRepository;
 import com.fitnuz.project.Repository.ProductRepository;
+import com.fitnuz.project.Repository.ProductVariantRepository;
 import com.fitnuz.project.Service.Definations.CartService;
 import com.fitnuz.project.Service.Definations.FileService;
 import com.fitnuz.project.Service.Definations.ProductService;
@@ -31,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -47,6 +51,9 @@ public class ProductserviceImp implements ProductService {
 
     @Autowired
     ProductRepository productRepository;
+
+    @Autowired
+    ProductVariantRepository productVariantRepository;
 
     @Autowired
     CartService cartService;
@@ -74,20 +81,57 @@ public class ProductserviceImp implements ProductService {
             throw new DuplicateResourceFoundException("Product with product name : " + productDto.getProductName()+" already exists");
         }
 
-        Product product = modelMapper.map(productDto,Product.class);
+        Product product = new Product();
+        product.setProductName(productDto.getProductName());
+        product.setProductDescription(productDto.getProductDescription());
         product.setCategory(category);
         product.setImage("default.png");
-        Double specialPrice = (product.getProductPrice()) -  ((product.getDiscount() * 0.01 ) * product.getProductPrice());
-        product.setSpecialPrice(specialPrice);
-        Product savedProductFromDB =  productRepository.save(product);
-        ProductDto savedProductDto = modelMapper.map(savedProductFromDB,ProductDto.class);
+
+        // Save product first to get the ID
+        Product savedProduct = productRepository.save(product);
+
+        // Create variants from DTO
+        if (productDto.getVariants() != null && !productDto.getVariants().isEmpty()) {
+            List<ProductVariant> variants = new ArrayList<>();
+            for (ProductVariantDto variantDto : productDto.getVariants()) {
+                ProductVariant variant = new ProductVariant();
+                variant.setProduct(savedProduct);
+                variant.setWeightLabel(variantDto.getWeightLabel());
+                variant.setWeightInGrams(variantDto.getWeightInGrams());
+                variant.setPrice(variantDto.getPrice());
+                variant.setDiscount(variantDto.getDiscount() != null ? variantDto.getDiscount() : 0.0);
+                Double specialPrice = variantDto.getPrice() - ((variantDto.getDiscount() != null ? variantDto.getDiscount() : 0.0) * 0.01 * variantDto.getPrice());
+                variant.setSpecialPrice(specialPrice);
+                variant.setStock(variantDto.getStock());
+                variants.add(variant);
+            }
+            productVariantRepository.saveAll(variants);
+            savedProduct.setVariants(variants);
+
+            // Set product-level fields from first variant for backward compat
+            ProductVariant firstVariant = variants.get(0);
+            savedProduct.setProductPrice(firstVariant.getPrice());
+            savedProduct.setSpecialPrice(firstVariant.getSpecialPrice());
+            savedProduct.setDiscount(firstVariant.getDiscount());
+            savedProduct.setProductStock(variants.stream().mapToInt(ProductVariant::getStock).sum());
+        } else {
+            // Fallback: use product-level fields if no variants provided
+            Double specialPrice = (productDto.getProductPrice()) - ((productDto.getDiscount() * 0.01) * productDto.getProductPrice());
+            savedProduct.setProductPrice(productDto.getProductPrice());
+            savedProduct.setSpecialPrice(specialPrice);
+            savedProduct.setDiscount(productDto.getDiscount());
+            savedProduct.setProductStock(productDto.getProductStock());
+        }
+
+        savedProduct = productRepository.save(savedProduct);
+        ProductDto savedProductDto = mapProductToDto(savedProduct);
         savedProductDto.setProductCategory(category.getCategoryName());
         return savedProductDto;
     }
 
     @Override
     public ProductResponse getAllProducts(Integer pageNumber,Integer pageSize,String sortBy,String sortOrderDir,String keyword,String category) {
-       
+
         Sort sort = sortOrderDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sort);
@@ -115,9 +159,9 @@ public class ProductserviceImp implements ProductService {
 
         List<ProductDto> productDtos = products.stream()
                 .map(product -> {
-                    ProductDto productDto = modelMapper.map(product,ProductDto.class);
-                    productDto.setImage(product.getImage());
-                    return productDto;
+                    ProductDto dto = mapProductToDto(product);
+                    dto.setImage(product.getImage());
+                    return dto;
                 })
                 .toList();
 
@@ -147,7 +191,7 @@ public class ProductserviceImp implements ProductService {
         }
 
         List<ProductDto> productDto = products.stream()
-                .map(product -> modelMapper.map(product,ProductDto.class))
+                .map(this::mapProductToDto)
                 .toList();
 
         ProductResponse productResponse = new ProductResponse();
@@ -171,7 +215,7 @@ public class ProductserviceImp implements ProductService {
             throw new ResourceNotFoundException("Product","Keyword",keyword);
         }
         List<ProductDto> productDto = products.stream()
-                .map(product -> modelMapper.map(product,ProductDto.class))
+                .map(this::mapProductToDto)
                 .toList();
 
         ProductResponse productResponse = new ProductResponse();
@@ -196,11 +240,42 @@ public class ProductserviceImp implements ProductService {
         }
         product.setProductName(productDto.getProductName());
         product.setProductDescription(productDto.getProductDescription());
-        product.setDiscount(productDto.getDiscount());
-        product.setProductPrice(productDto.getProductPrice());
-        product.setProductStock(productDto.getProductStock());
-        Double specialPrice = (productDto.getProductPrice()) -  ((productDto.getDiscount() * 0.01 ) * productDto.getProductPrice());
-        product.setSpecialPrice(specialPrice);
+
+        // Update variants
+        if (productDto.getVariants() != null && !productDto.getVariants().isEmpty()) {
+            // Clear old variants (orphanRemoval will delete them)
+            product.getVariants().clear();
+            productRepository.flush();
+
+            List<ProductVariant> newVariants = new ArrayList<>();
+            for (ProductVariantDto variantDto : productDto.getVariants()) {
+                ProductVariant variant = new ProductVariant();
+                variant.setProduct(product);
+                variant.setWeightLabel(variantDto.getWeightLabel());
+                variant.setWeightInGrams(variantDto.getWeightInGrams());
+                variant.setPrice(variantDto.getPrice());
+                variant.setDiscount(variantDto.getDiscount() != null ? variantDto.getDiscount() : 0.0);
+                Double specialPrice = variantDto.getPrice() - ((variantDto.getDiscount() != null ? variantDto.getDiscount() : 0.0) * 0.01 * variantDto.getPrice());
+                variant.setSpecialPrice(specialPrice);
+                variant.setStock(variantDto.getStock());
+                newVariants.add(variant);
+            }
+            product.getVariants().addAll(newVariants);
+
+            // Set product-level fields from first variant
+            ProductVariant firstVariant = newVariants.get(0);
+            product.setProductPrice(firstVariant.getPrice());
+            product.setSpecialPrice(firstVariant.getSpecialPrice());
+            product.setDiscount(firstVariant.getDiscount());
+            product.setProductStock(newVariants.stream().mapToInt(ProductVariant::getStock).sum());
+        } else {
+            product.setDiscount(productDto.getDiscount());
+            product.setProductPrice(productDto.getProductPrice());
+            product.setProductStock(productDto.getProductStock());
+            Double specialPrice = (productDto.getProductPrice()) -  ((productDto.getDiscount() * 0.01 ) * productDto.getProductPrice());
+            product.setSpecialPrice(specialPrice);
+        }
+
         Product savedProduct =  productRepository.save(product);
 
         List<Cart> carts = cartRepository.findCartByProductId(product.getProductId());
@@ -215,7 +290,7 @@ public class ProductserviceImp implements ProductService {
         cartDtos.forEach(cartDto -> cartService.updateProductInCarts(cartDto.getCartId(),productId));
 
 
-        ProductDto updatedProductDto = modelMapper.map(savedProduct,ProductDto.class);
+        ProductDto updatedProductDto = mapProductToDto(savedProduct);
         updatedProductDto.setProductCategory(product.getCategory().getCategoryName());
 
         return updatedProductDto;
@@ -235,7 +310,7 @@ public class ProductserviceImp implements ProductService {
         }
 
         productRepository.delete(product);
-        return modelMapper.map(product,ProductDto.class);
+        return mapProductToDto(product);
     }
 
     @Override
@@ -246,7 +321,7 @@ public class ProductserviceImp implements ProductService {
 
         product.setImage(fileName);
         productRepository.save(product);
-        ProductDto productDto = modelMapper.map(product,ProductDto.class);
+        ProductDto productDto = mapProductToDto(product);
         productDto.setProductCategory(product.getCategory().getCategoryName());
 
         return productDto;
@@ -259,15 +334,11 @@ public class ProductserviceImp implements ProductService {
         Page<Product> productsPage = productRepository.findAll(pageDetails);
         List<Product> products = productsPage.getContent();
 
-//        if(products.isEmpty()){
-//            throw new GeneralAPIException("Product List Is Empty At The Moment");
-//        }
-
         List<ProductDto> productDtos = products.stream()
                 .map(product -> {
-                    ProductDto productDto = modelMapper.map(product,ProductDto.class);
-                    productDto.setImage(constructImageUrl(product.getImage()));
-                    return productDto;
+                    ProductDto dto = mapProductToDto(product);
+                    dto.setImage(constructImageUrl(product.getImage()));
+                    return dto;
                 })
                 .toList();
 
@@ -281,6 +352,16 @@ public class ProductserviceImp implements ProductService {
         return productResponse;
     }
 
+    private ProductDto mapProductToDto(Product product) {
+        ProductDto dto = modelMapper.map(product, ProductDto.class);
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            List<ProductVariantDto> variantDtos = product.getVariants().stream()
+                    .map(v -> modelMapper.map(v, ProductVariantDto.class))
+                    .toList();
+            dto.setVariants(variantDtos);
+        }
+        return dto;
+    }
 
     public String constructImageUrl(String fileName) {
         String baseUrl = imageUrl.endsWith("/") ? imageUrl : imageUrl + "/";

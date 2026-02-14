@@ -13,6 +13,7 @@ public class OrderItemDto {
     private Integer quantity;
     private double discount;
     private double orderedProductPrice;
+    private String weightLabel;
 
     public Long getOrderItemId() {
         return orderItemId;
@@ -52,5 +53,13 @@ public class OrderItemDto {
 
     public void setOrderedProductPrice(double orderedProductPrice) {
         this.orderedProductPrice = orderedProductPrice;
+    }
+
+    public String getWeightLabel() {
+        return weightLabel;
+    }
+
+    public void setWeightLabel(String weightLabel) {
+        this.weightLabel = weightLabel;
     }
 }

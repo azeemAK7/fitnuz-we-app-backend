@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface CartService {
     @Transactional
-    CartDto addProduct(Long productId, Integer quantity);
+    CartDto addProduct(Long variantId, Integer quantity);
 
     List<CartDto> getAllCarts();
 
@@ -16,10 +16,10 @@ public interface CartService {
     CartDto getUserCart();
 
     @Transactional
-    CartDto updateProductStock(Long productId, String operration);
+    CartDto updateProductStock(Long variantId, String operration);
 
     @Transactional
-    String deleteProductFromCart(Long productId, Long cartId);
+    String deleteProductFromCart(Long variantId, Long cartId);
 
     @Transactional
     void updateProductInCarts(Long cartId, Long productId);

@@ -6,13 +6,16 @@ import com.fitnuz.project.Exception.CustomException.ResourceNotFoundException;
 import com.fitnuz.project.Model.Cart;
 import com.fitnuz.project.Model.CartItem;
 import com.fitnuz.project.Model.Product;
+import com.fitnuz.project.Model.ProductVariant;
 import com.fitnuz.project.Model.User;
 import com.fitnuz.project.Payload.DTO.CartDto;
 import com.fitnuz.project.Payload.DTO.CartItemDto;
 import com.fitnuz.project.Payload.DTO.ProductDto;
+import com.fitnuz.project.Payload.DTO.ProductVariantDto;
 import com.fitnuz.project.Repository.CartItemRepository;
 import com.fitnuz.project.Repository.CartRepository;
 import com.fitnuz.project.Repository.ProductRepository;
+import com.fitnuz.project.Repository.ProductVariantRepository;
 import com.fitnuz.project.Service.Definations.CartService;
 import com.fitnuz.project.Util.AuthUtil;
 import com.fitnuz.project.Util.CartUtil;
@@ -42,6 +45,9 @@ public class CartServiceImpl implements CartService {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductVariantRepository productVariantRepository;
+
+    @Autowired
     private CartItemRepository cartItemRepository;
 
     @Value("${project.image}")
@@ -52,33 +58,36 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public CartDto addProduct(Long productId, Integer quantity) {
+    public CartDto addProduct(Long variantId, Integer quantity) {
         Cart cart = createCart();
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product","ProductId",productId));
-        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductVariant","variantId",variantId));
+        Product product = variant.getProduct();
+
+        CartItem cartItem = cartItemRepository.findCartItemByVariantIdAndCartId(
                 cart.getCartId(),
-                productId
+                variantId
         );
 
         if(cartItem != null){
-            throw new DuplicateResourceFoundException("Product with product name : " + product.getProductName()+" already exists");
+            throw new DuplicateResourceFoundException("Product variant " + product.getProductName() + " (" + variant.getWeightLabel() + ") already exists in cart");
         }
-        if(product.getProductStock() == 0){
-            throw new GeneralAPIException("Product " + product.getProductName() +" is out of stock");
+        if(variant.getStock() == 0){
+            throw new GeneralAPIException("Product " + product.getProductName() + " (" + variant.getWeightLabel() + ") is out of stock");
         }
-        if(product.getProductStock() < quantity){
-            throw new GeneralAPIException("Add quantity below " + product.getProductStock());
+        if(variant.getStock() < quantity){
+            throw new GeneralAPIException("Add quantity below " + variant.getStock());
         }
         cartItem = new CartItem();
         cartItem.setQuantity(quantity);
-        cartItem.setProductPrice(product.getSpecialPrice());
-        cartItem.setProductDiscount(product.getDiscount());
+        cartItem.setProductPrice(variant.getSpecialPrice());
+        cartItem.setProductDiscount(variant.getDiscount());
         cartItem.setProduct(product);
+        cartItem.setProductVariant(variant);
         cartItem.setCart(cart);
         cartItemRepository.save(cartItem);
 
-        cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
+        cart.setTotalPrice(cart.getTotalPrice() + (variant.getSpecialPrice() * quantity));
         cart.getCartItems().add(cartItem);
         cart = cartRepository.save(cart);
 
@@ -88,6 +97,9 @@ public class CartServiceImpl implements CartService {
         List<ProductDto> productDtos = cartItems.stream().map(item->{
             ProductDto productDto = modelMapper.map(item.getProduct(),ProductDto.class);
             productDto.setProductStock(quantity);
+            if (item.getProductVariant() != null) {
+                mapVariantInfoToProductDto(productDto, item);
+            }
             return productDto;
         })
                 .toList();
@@ -107,6 +119,9 @@ public class CartServiceImpl implements CartService {
                     .map(cartItem-> {
                         ProductDto productDto = modelMapper.map(cartItem.getProduct(), ProductDto.class);
                         productDto.setProductStock(cartItem.getQuantity());
+                        if (cartItem.getProductVariant() != null) {
+                            mapVariantInfoToProductDto(productDto, cartItem);
+                        }
                         return productDto;
                     })
                     .toList();
@@ -124,17 +139,14 @@ public class CartServiceImpl implements CartService {
         if(cart == null){
             throw new GeneralAPIException("Cart Does Not Exist");
         }
-        // If cart is now empty, delete it
-//        if (cart.getCartItems().isEmpty()) {
-//            cartRepository.delete(cart);
-//            throw new GeneralAPIException("Cart Is Empty");
-//        }
         CartDto cartDto = modelMapper.map(cart,CartDto.class);
         List<ProductDto> productDtos = cart.getCartItems().stream()
                 .map(cartItem -> {
                     ProductDto productDto = modelMapper.map(cartItem.getProduct(), ProductDto.class);
                     productDto.setCartQuantity(cartItem.getQuantity());
-//                    productDto.setImage(constructImageUrl(productDto.getImage()));
+                    if (cartItem.getProductVariant() != null) {
+                        mapVariantInfoToProductDto(productDto, cartItem);
+                    }
                     return productDto;
                 })
                 .toList();
@@ -145,39 +157,38 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public CartDto updateProductStock(Long productId, String operation) {
+    public CartDto updateProductStock(Long variantId, String operation) {
 
         int value =  operation.equalsIgnoreCase("increase") ? 1:-1;
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product","ProductId",productId));
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductVariant","variantId",variantId));
 
         Cart cart = cartRepository.findCartByEmail(authUtil.getUserEmail());
         if(cart == null){
             throw new GeneralAPIException("Cart Not Found");
         }
 
-        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cart.getCartId(),productId);
+        CartItem cartItem = cartItemRepository.findCartItemByVariantIdAndCartId(cart.getCartId(), variantId);
         if(cartItem == null){
             throw new ResourceNotFoundException("CartItem","CartId",cart.getCartId());
         }
 
-        if(product.getProductStock() == 0){
-            throw new GeneralAPIException("Product " + product.getProductName() +" is out of stock");
+        if(variant.getStock() == 0){
+            throw new GeneralAPIException("Product " + variant.getProduct().getProductName() + " (" + variant.getWeightLabel() + ") is out of stock");
         }
 
         Integer quantity = cartItem.getQuantity() + value;
 
-        if (product.getProductStock() < quantity) {
-            throw new GeneralAPIException("Add quantity below or equal to " + product.getProductStock());
+        if (variant.getStock() < quantity) {
+            throw new GeneralAPIException("Add quantity below or equal to " + variant.getStock());
         }
 
         if (quantity <= 0) {
-            // Remove cartItem from cart
-            cart.getCartItems().remove(cartItem);// orphanRemoval = true takes care of DB
+            cart.getCartItems().remove(cartItem);
         } else {
-            cartItem.setProductPrice(product.getSpecialPrice());
-            cartItem.setProductDiscount(product.getDiscount());
+            cartItem.setProductPrice(variant.getSpecialPrice());
+            cartItem.setProductDiscount(variant.getDiscount());
             cartItem.setQuantity(quantity);
 
             if (!cart.getCartItems().contains(cartItem)) {
@@ -185,21 +196,17 @@ public class CartServiceImpl implements CartService {
             }
         }
 
-
-        // Recalculate total price
         cart.setTotalPrice(cartUtil.calculateTotalPrice(cart));
-
-        // Save cart (will cascade to CartItems)
         cartRepository.save(cart);
-
-
-
 
         CartDto cartDto = modelMapper.map(cart,CartDto.class);
         List<ProductDto> productDtos = cart.getCartItems().stream()
                 .map(item -> {
                     ProductDto productDto = modelMapper.map(item.getProduct(), ProductDto.class);
                     productDto.setProductStock(item.getQuantity());
+                    if (item.getProductVariant() != null) {
+                        mapVariantInfoToProductDto(productDto, item);
+                    }
                     return productDto;
                 })
                 .toList();
@@ -209,21 +216,21 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public String deleteProductFromCart(Long productId, Long cartId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product","ProductId",productId));
+    public String deleteProductFromCart(Long variantId, Long cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("cart","cartId",cartId));
 
-        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cartId,productId);
+        CartItem cartItem = cartItemRepository.findCartItemByVariantIdAndCartId(cartId, variantId);
         if(cartItem == null){
            throw  new ResourceNotFoundException("cartItem","cartId",cartId);
         }
 
+        Product product = cartItem.getProduct();
         cart.setTotalPrice(cart.getTotalPrice() - (cartItem.getProductPrice()*cartItem.getQuantity()));
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
-        return "product with product name : " + product.getProductName() + " removed from cart";
+        String weightInfo = cartItem.getProductVariant() != null ? " (" + cartItem.getProductVariant().getWeightLabel() + ")" : "";
+        return "product with product name : " + product.getProductName() + weightInfo + " removed from cart";
     }
 
     @Transactional
@@ -239,9 +246,18 @@ public class CartServiceImpl implements CartService {
         }
 
         cart.setTotalPrice(cart.getTotalPrice() - (cartItem.getProductPrice()*cartItem.getQuantity()));
-        cartItem.setProductPrice(product.getSpecialPrice());
+
+        // If cart item has a variant, use variant pricing
+        if (cartItem.getProductVariant() != null) {
+            ProductVariant variant = cartItem.getProductVariant();
+            cartItem.setProductPrice(variant.getSpecialPrice());
+            cartItem.setProductDiscount(variant.getDiscount());
+        } else {
+            cartItem.setProductPrice(product.getSpecialPrice());
+            cartItem.setProductDiscount(product.getDiscount());
+        }
+
         cart.setTotalPrice(cart.getTotalPrice() + (cartItem.getProductPrice()*cartItem.getQuantity()));
-        cartItem.setProductDiscount(product.getDiscount());
         cartItemRepository.save(cartItem);
         cartRepository.save(cart);
 
@@ -260,20 +276,31 @@ public class CartServiceImpl implements CartService {
         }
         double totalPrice = 0.0;
         for(CartItemDto cartItemDto : cartItems){
+            Long variantId = cartItemDto.getVariantId();
             Long productId = cartItemDto.getProductId();
             Integer quantity = cartItemDto.getProductStock();
 
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
-
-            totalPrice += product.getSpecialPrice() * quantity;
-
             CartItem cartItem = new CartItem();
-            cartItem.setProduct(product);
             cartItem.setCart(cart);
             cartItem.setQuantity(quantity);
-            cartItem.setProductPrice(product.getSpecialPrice());
-            cartItem.setProductDiscount(product.getDiscount());
+
+            if (variantId != null) {
+                ProductVariant variant = productVariantRepository.findById(variantId)
+                        .orElseThrow(() -> new ResourceNotFoundException("ProductVariant", "variantId", variantId));
+                cartItem.setProduct(variant.getProduct());
+                cartItem.setProductVariant(variant);
+                cartItem.setProductPrice(variant.getSpecialPrice());
+                cartItem.setProductDiscount(variant.getDiscount());
+                totalPrice += variant.getSpecialPrice() * quantity;
+            } else {
+                Product product = productRepository.findById(productId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+                cartItem.setProduct(product);
+                cartItem.setProductPrice(product.getSpecialPrice());
+                cartItem.setProductDiscount(product.getDiscount());
+                totalPrice += product.getSpecialPrice() * quantity;
+            }
+
             cartItemRepository.save(cartItem);
         }
         cart.setTotalPrice(totalPrice);
@@ -291,6 +318,20 @@ public class CartServiceImpl implements CartService {
         return cart;
     }
 
+    private void mapVariantInfoToProductDto(ProductDto productDto, CartItem cartItem) {
+        ProductVariant variant = cartItem.getProductVariant();
+        if (variant != null) {
+            // Set variant identity fields
+            productDto.setVariantId(variant.getVariantId());
+            productDto.setWeightLabel(variant.getWeightLabel());
+
+            // Override product-level pricing with variant pricing for cart display
+            productDto.setProductPrice(variant.getPrice());
+            productDto.setSpecialPrice(variant.getSpecialPrice());
+            productDto.setDiscount(variant.getDiscount());
+            productDto.setProductStock(variant.getStock());
+        }
+    }
 
     public String constructImageUrl(String fileName){
         String fullUrl = imageUrl + path;
